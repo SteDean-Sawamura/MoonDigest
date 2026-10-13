@@ -60,6 +60,12 @@
       "run_at": "document_idle"
     },
     {
+      "matches": ["https://search.bilibili.com/*"],
+      "js": ["errors.js", "bili-search-fav.js"],
+      "css": ["bili-search-fav.css"],
+      "run_at": "document_idle"
+    },
+    {
       "matches": ["https://www.bilibili.com/video/*", "https://space.bilibili.com/*"],
       "js": ["typing.js", "triage/viewer-frame.js"],
       "css": ["triage/viewer-frame.css"],

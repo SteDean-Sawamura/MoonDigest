@@ -1,0 +1,43 @@
+/* bili-search-fav.js on search.bilibili.com. Neutrals use B站's theme variables, so they follow its dark theme; the
+   purple rule marks what MoonDigest adds (DESIGN 视觉设计 · 颜色: 紫). */
+span.mdg-favmark {
+  display: inline-block !important;
+  margin-right: 4px;
+  padding: 1px 4px 1px 6px;
+  border-left: 2px solid #7c3ed1;
+  border-radius: 0 4px 4px 0;
+  background: var(--graph_bg_regular, rgba(148, 153, 160, 0.14));
+  color: var(--text2, #61666d);
+  font-size: 11px;
+  font-weight: 600;
+  font-style: normal;
+  line-height: 14px;
+  vertical-align: 1px;
+}
+.mdg-favonly { display: inline-flex; margin-left: 8px; padding-left: 8px; border-left: 2px solid #7c3ed1; }
+html.bili_dark span.mdg-favmark,
+html.bili_dark .mdg-favonly,
+html.bili_dark .mdg-favpanel { border-left-color: #cba6f7; }
+
+html.mdg-favonly-on .search-page { display: none !important; }
+.mdg-favpanel { margin: 0 auto 40px; padding-left: 10px; border-left: 2px solid #7c3ed1; }
+.mdg-favhead { margin: 0 0 16px; color: var(--text2, #61666d); font-size: 14px; }
+.mdg-faverr { color: #b52a48; }
+.mdg-favgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 24px 16px; }
+.mdg-favcard { min-width: 0; }
+.mdg-favcover { position: relative; display: block; aspect-ratio: 16 / 10; overflow: hidden; border-radius: 6px; background: var(--graph_bg_regular, #f1f2f3); }
+.mdg-favcover img { width: 100%; height: 100%; object-fit: cover; }
+.mdg-favcover span { position: absolute; right: 6px; bottom: 6px; padding: 0 4px; border-radius: 4px; background: rgba(0, 0, 0, 0.6); color: #fff; font-size: 12px; line-height: 18px; }
+.mdg-favtit {
+  display: -webkit-box;
+  margin-top: 8px;
+  overflow: hidden;
+  color: var(--text1, #18191c);
+  font-size: 15px;
+  line-height: 22px;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+.mdg-favtit:hover { color: var(--brand_blue, #00aeec); }
+.mdg-favmeta { margin-top: 4px; overflow: hidden; color: var(--text3, #9499a0); font-size: 13px; white-space: nowrap; text-overflow: ellipsis; }
+.mdg-favgone .mdg-favcover img { opacity: 0.4; }

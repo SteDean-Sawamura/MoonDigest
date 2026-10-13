@@ -489,6 +489,30 @@ async function triageFolderIds(mediaId) {
   return (data || []).filter((m) => m.type === 2).map((m) => m.bvid || m.bv_id);
 }
 
+// The user's own folders, id and title, in one request.
+async function triageFavFolders() {
+  const mid = await triageMid();
+  const data = await triageBiliGet(`https://api.bilibili.com/x/v3/fav/folder/created/list-all?up_mid=${mid}`);
+  return (data?.list || []).map((f) => ({ id: String(f.id), title: f.title || "" }));
+}
+
+// ponytail: kept in the worker's memory for 10 minutes and dropped when it sleeps; one search page's marks ask once,
+// so a folder changed meanwhile shows on the next search after that.
+let triageFavIndexMemo = null; // { at, promise }
+function triageFavIndex() {
+  if (triageFavIndexMemo && Date.now() - triageFavIndexMemo.at < 10 * 60 * 1000) return triageFavIndexMemo.promise;
+  const promise = (async () => {
+    const index = {};
+    for (const f of await triageFavFolders()) {
+      for (const b of await triageFolderIds(f.id)) (index[b] ||= []).push(f.title);
+    }
+    return { index };
+  })();
+  triageFavIndexMemo = { at: Date.now(), promise };
+  promise.catch(() => (triageFavIndexMemo = null));
+  return promise;
+}
+
 // created/list (paged) is used instead of list-all because only it returns each folder's cover.
 async function triageCreatedFolders() {
   const mid = await triageMid();
@@ -882,6 +906,39 @@ const TRIAGE_HANDLERS = {
     const mid = known || (await triageMid());
     const data = await triageBiliGet(`https://api.bilibili.com/x/v3/fav/folder/created/list-all?up_mid=${mid}&type=2&rid=${aid}`);
     return { mid, folders: (data?.list || []).filter((f) => f.fav_state === 1).map((f) => ({ id: String(f.id), title: f.title })) };
+  },
+
+  // The search page's 「已收藏」 marks: { bvid: [folder titles] } over every folder, one ids request per folder.
+  "triage-fav-index": () => triageFavIndex(),
+
+  // The search page's 「只看已收藏」: B站's own favorites search with type=1 looks in every folder (any media_id will do).
+  // At most 10 pages of 40; more says so.
+  "triage-fav-search": async ({ keyword }) => {
+    const kw = String(keyword || "").trim();
+    if (!kw) return { items: [], more: false };
+    const folders = await triageFavFolders();
+    if (!folders.length) return { items: [], more: false };
+    const items = [];
+    for (let pn = 1; pn <= 10; pn++) {
+      const q = new URLSearchParams({ media_id: folders[0].id, pn, ps: 40, keyword: kw, order: "mtime", type: 1, tid: 0, platform: "web" });
+      const data = await triageBiliGet(`https://api.bilibili.com/x/v3/fav/resource/list?${q}`);
+      for (const m of data?.medias || []) {
+        if (m.type !== 2) continue;
+        items.push({
+          bvid: m.bvid || m.bv_id,
+          title: m.title || "",
+          cover: String(m.cover || "").replace(/^http:\/\//, "https://"),
+          duration: Number(m.duration) || 0,
+          play: Number(m.cnt_info?.play) || 0,
+          up: m.upper?.name || "",
+          mid: String(m.upper?.mid || ""),
+          favAt: Number(m.fav_time) || 0,
+          invalid: m.attr !== 0
+        });
+      }
+      if (!data?.has_more) return { items, more: false };
+    }
+    return { items, more: true };
   },
 
   "triage-analysis-get": async ({ bvids }) => {
